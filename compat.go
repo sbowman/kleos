@@ -24,7 +24,7 @@ func (l logger) Printf(msg string, args ...interface{}) {
 		debug: true,
 	}
 
-	m.FileAndLineNumberBack(3).Output(output, msg, args...)
+	m.FileAndLineNumberBack(3).Output(msg, args...)
 }
 
 // NewLogger creates a new logger to use with simple logging interfaces.  Logs to the debug

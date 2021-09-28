@@ -5,23 +5,15 @@ package kleos
 
 import (
 	"context"
-	"io"
-	"os"
 	"path/filepath"
 	"runtime"
 	"time"
 )
 
 var (
-	// Output receives log messages; defaults to stdout.
-	output io.Writer = os.Stdout
-
 	// Verbosity is the default debug level to output.  If less than zero, no debug
 	// messages are output.
 	verbosity = -1
-
-	// Defaults adds these properties to every set of fields
-	defaults Fields = nil
 )
 
 // Fields holds details about the log message.
@@ -146,12 +138,12 @@ func (m Message) Context(ctx context.Context) Message {
 
 // Info writes an info-level message.  Info messages are always written.
 func (m Message) Info(msg string) {
-	m.Output(output, msg)
+	m.Output(msg)
 }
 
 // Infof writes a formatted info-level message, using printf formatting.
 func (m Message) Infof(msg string, args ...interface{}) {
-	m.Output(output, msg, args...)
+	m.Output(msg, args...)
 }
 
 // Debug writes an debug-level message.  Debug messages are written when the
@@ -162,14 +154,14 @@ func (m Message) Debug(msg string) {
 	}
 
 	m.debug = true
-	m.Output(output, msg)
+	m.Output(msg)
 }
 
 // Info writes an info-level message.  Info messages are always written.
 func Info(msg string) {
 	Message{
 		when: time.Now(),
-	}.FileAndLineNumber().Output(output, msg)
+	}.FileAndLineNumber().Output(msg)
 }
 
 // Debug writes an debug-level message.  Debug messages are written when the
@@ -184,11 +176,11 @@ func Debug(msg string) {
 		debug: true,
 	}
 
-	m.FileAndLineNumber().Output(output, msg)
+	m.FileAndLineNumber().Output(msg)
 }
 
 // SetOutput changes the output writer.
-func SetOutput(out io.Writer) {
+func SetOutput(out Writer) {
 	output = out
 }
 
