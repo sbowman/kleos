@@ -36,7 +36,7 @@ func (w *ColorOutput) Write(m Message, msg string, args ...interface{}) error {
 	w.Lock()
 	defer w.Unlock()
 
-	_, _ = w.timestamp.Fprint(w.Out, m.when.Format(PaddedRFC3339Ms))
+	_, _ = w.timestamp.Fprint(w.Out, m.when.UTC().Format(PaddedRFC3339Ms))
 
 	if m.debug {
 		_, _ = w.debug.Fprintf(w.Out, " DBG [%03d]", m.verbosity)
@@ -89,6 +89,8 @@ func (w *ColorOutput) Write(m Message, msg string, args ...interface{}) error {
 			}
 		}
 	}
+
+	fmt.Println()
 
 	return nil
 }

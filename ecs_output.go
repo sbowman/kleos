@@ -8,10 +8,8 @@ import (
 	"sync"
 )
 
-var EOL = []byte{'\n'}
-
-// ELKOutput outputs in JSON format using the Elastic ECS format.  Meant for services like the ELK
-// stack.  Note that ELKOutput will overload these properties:
+// ECSOutput outputs in JSON format using the Elastic ECS format.  Meant for services like the ELK
+// stack.  Note that ECSOutput will overload these properties:
 //
 // * `@timestamp` - when the message was generated
 // * `message`   - the plaintext log message
@@ -23,28 +21,28 @@ var EOL = []byte{'\n'}
 // * `error.message` - the error message formatted, if present
 // * `error.code` - the error code, if the error supports it
 //
-type ELKOutput struct {
+type ECSOutput struct {
 	sync.Mutex
 
 	Host string
 	Out  io.Writer
 }
 
-// NewELKOutput creates a new log output that's meant to be used with the ELK stack.  Supports ECS
-// fields for the standard fields.  See ELKOutput for details.
-func NewELKOutput(host string, out io.Writer) *ELKOutput {
-	return &ELKOutput{
+// NewECSOutput creates a new log output that's meant to be used with the ELK stack.  Supports ECS
+// fields for the standard fields.  See ECSOutput for details.
+func NewECSOutput(host string, writer io.Writer) *ECSOutput {
+	return &ECSOutput{
 		Host: host,
-		Out:  out,
+		Out:  writer,
 	}
 }
 
-func (w *ELKOutput) Write(m Message, msg string, args ...interface{}) error {
+func (w *ECSOutput) Write(m Message, msg string, args ...interface{}) error {
 	if m.fields == nil {
 		m.fields = Fields{}
 	}
 
-	m.fields["@timestamp"] = m.when.Format(PaddedRFC3339Ms)
+	m.fields["@timestamp"] = m.when.UTC().Format(PaddedRFC3339Ms)
 	m.fields["host.name"] = w.Host
 
 	if m.debug {
@@ -76,11 +74,10 @@ func (w *ELKOutput) Write(m Message, msg string, args ...interface{}) error {
 	// Applies any registered context variables to the fields
 	contexts.Run(m.ctx, m.fields)
 
-	enc := json.NewEncoder(w.Out)
-
 	w.Lock()
 	defer w.Unlock()
 
+	enc := json.NewEncoder(w.Out)
 	if err := enc.Encode(m.fields); err != nil {
 		return err
 	}

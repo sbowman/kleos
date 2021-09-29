@@ -7,47 +7,34 @@ import (
 )
 
 var (
+	// ErrInvalidConnectionType returned when the connection isn't a TCPConn.  Shouldn't
+	// typically happen.
 	ErrInvalidConnectionType = errors.New("not a TCP connection")
-	ErrWriteFailed           = errors.New("failed to write entire log message")
 )
 
-// LogstashWriter is designed to output log messages to the Logstash TCP input.
+// LogstashWriter is designed to output log messages to the Logstash TCP input.  Use this with
+// ELKOutput to send log messages to an ELK-compatible stack.
 type LogstashWriter struct {
 	Host    string
 	Timeout time.Duration
 
-	conn *net.TCPConn
-	ch   chan []byte
+	conn   *net.TCPConn
 }
 
 // NewLogstashWriter creates a new writer to connect to the Logstash host and output log messages.
 // Host should include hostname or IP address and port of the Logstash TCP service.
-func NewLogstashWriter(host string, timeout time.Duration, bufferSize int) *LogstashWriter {
-	w := &LogstashWriter{
+func NewLogstashWriter(host string, timeout time.Duration) *LogstashWriter {
+	return &LogstashWriter{
 		Host:    host,
 		Timeout: timeout,
 	}
-
-	if bufferSize > 0 {
-		w.ch = make(chan []byte, bufferSize)
-	} else {
-		w.ch = make(chan []byte)
-	}
-
-	go w.sender()
-	return w
 }
 
 func (w *LogstashWriter) Close() {
-	if w.ch != nil {
-		close(w.ch)
-		w.ch = nil
-	} else if w.conn != nil {
-		_ = w.conn.Close()
-		w.conn = nil
-	}
+	_ = w.conn.Close()
 }
 
+// Dial connects to the Logstash TCP service.
 func (w *LogstashWriter) Dial() error {
 	addr, err := net.ResolveTCPAddr("tcp", w.Host)
 	if err != nil {
@@ -71,30 +58,8 @@ func (w *LogstashWriter) Dial() error {
 	return nil
 }
 
-func (w *LogstashWriter) Write(b []byte) error {
-	w.ch <- b
-	return nil
-}
-
-func (w *LogstashWriter) sender() {
-	for b := range w.ch {
-		_ = w.send(b)
-	}
-}
-
-func (w *LogstashWriter) send(b []byte) error {
-	if err := w.conn.SetDeadline(time.Now().Add(w.Timeout)); err != nil {
-		return err
-	}
-
-	n, err := w.conn.Write(b)
-	if err != nil {
-		return err
-	}
-
-	if n != len(b) {
-		return ErrWriteFailed
-	}
-
-	return nil
+// Write sends a block of bytes to the LogstashWriter buffer.  Once an array of bytes with a
+// carriage return at the end is written, the buffer is shipped to Logstash via TCP and reset.
+func (w *LogstashWriter) Write(b []byte) (int, error) {
+	return w.conn.Write(b)
 }
