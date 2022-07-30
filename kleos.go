@@ -81,12 +81,16 @@ func Context(ctx context.Context) Message {
 // FileAndLineNumber appends the filename and line number information to the
 // log message (where the log was implemented).
 func (m Message) FileAndLineNumber() Message {
-	return m.FileAndLineNumberBack(3)
+	return m.FileAndLineNumberBack(4)
 }
 
 // FileAndLineNumberBack appends the filename and line number information to the
 // log message (where the log was implemented).
 func (m Message) FileAndLineNumberBack(back int) Message {
+	// if m.line != 0 {
+	// 	return m
+	// }
+	
 	_, file, line, ok := runtime.Caller(back)
 	if !ok {
 		return m
@@ -97,6 +101,13 @@ func (m Message) FileAndLineNumberBack(back int) Message {
 	m.line = line
 
 	return m
+}
+
+// Previous logs the package, file, and line number from the previous function, rather than the
+// current function logging the message.  This can be useful when a helper function is logging the
+// message, but you'd rather know what function called that helper.
+func (m Message) Previous() Message {
+	return m.FileAndLineNumberBack(3)
 }
 
 // WithFields applies the given fields to the log message.
