@@ -31,6 +31,11 @@ func With(fields Fields) Message {
 	return generate().With(fields)
 }
 
+// WithFields applies the given fields to the log message (deprecated).
+func WithFields(fields Fields) Message {
+	return generate().With(fields)
+}
+
 // Debug generates a debug message.  Equivalent to `kleos.V(1).Log("This is a debug messsage!")`.
 // If the Kleos verbosity is lower than the verbosity of the message, the message will not be
 // output.
@@ -44,4 +49,9 @@ func Debug(msg string) {
 // message.
 func Log(msg string) {
 	generate().Log(msg)
+}
+
+// Info logs a message.  Deprecated; use Log instead.
+func Info(msg string) {
+	Log(msg)
 }
