@@ -12,48 +12,50 @@ import (
 // TextOutput is meant to output to stdout or stderr in black and white.
 type TextOutput struct {
 	sync.Mutex
-	Out io.Writer
+	out io.Writer
 }
 
+// NewTextOutput creates a logger that writes human-readable plain text with no coloring.
 func NewTextOutput(out io.Writer) *TextOutput {
 	return &TextOutput{
-		Out:       out,
+		out: out,
 	}
 }
 
-func (w *TextOutput) Write(m Message, msg string, args ...interface{}) error {
+// Write the message out in plain text, but human-readable.
+func (w *TextOutput) Write(m Message) error {
 	w.Lock()
 	defer w.Unlock()
 
-	_, _ = fmt.Fprint(w.Out, m.when.UTC().Format(PaddedRFC3339Ms))
+	_, _ = fmt.Fprint(w.out, m.when.UTC().Format(PaddedRFC3339Ms))
 
-	if m.debug {
-		_, _ =fmt.Fprintf(w.Out, " DBG [%03d]", m.verbosity)
-	} else if m.err == nil {
-		_, _ = fmt.Fprint(w.Out, " INF")
+	if m.verbosity > 0 {
+		_, _ = fmt.Fprintf(w.out, " D%02d", m.verbosity)
+	} else if m.error == nil {
+		_, _ = fmt.Fprint(w.out, " INF")
 	} else {
-		_, _ = fmt.Fprint(w.Out, " ERR")
+		_, _ = fmt.Fprint(w.out, " ERR")
 	}
 
 	// Write out the human-readable message
-	msg = strings.TrimSpace(msg)
+	msg := strings.TrimSpace(m.msg)
 	if msg != "" {
-		_, _ = fmt.Fprint(w.Out, " ")
-		_, _ =fmt.Fprintf(w.Out, msg, args...)
+		_, _ = fmt.Fprint(w.out, " ")
+		_, _ = fmt.Fprint(w.out, msg)
 	}
 
 	// Where was the message logged?
 	if m.file != "" {
-		_, _ = fmt.Fprintf(w.Out, " (%s/%s:%d)", m.pkg, m.file, m.line)
+		_, _ = fmt.Fprintf(w.out, " (%s/%s:%d)", m.pkg, m.file, m.line)
 	}
 
-	if m.err != nil {
-		_, _ = fmt.Fprint(w.Out, ", error=")
-		_, _ = fmt.Fprint(w.Out, strconv.Quote(m.err.Error()))
+	if m.error != nil {
+		_, _ = fmt.Fprint(w.out, ", err=")
+		_, _ = fmt.Fprint(w.out, strconv.Quote(m.error.Error()))
 	}
 
 	if m.fields == nil {
-		m.fields = Fields{}
+		m.fields = make(Fields)
 	}
 
 	// Applies any registered context variables to the fields
@@ -71,15 +73,15 @@ func (w *TextOutput) Write(m Message, msg string, args ...interface{}) error {
 			v := encode(m.fields[k])
 
 			if v != "" {
-				_, _ = fmt.Fprint(w.Out, ", ")
-				_, _ = fmt.Fprint(w.Out, k)
-				_, _ = fmt.Fprint(w.Out, "=")
-				_, _ = fmt.Fprint(w.Out, v)
+				_, _ = fmt.Fprint(w.out, ", ")
+				_, _ = fmt.Fprint(w.out, k)
+				_, _ = fmt.Fprint(w.out, "=")
+				_, _ = fmt.Fprint(w.out, v)
 			}
 		}
 	}
 
-	fmt.Println()
+	_, _ = fmt.Fprintln(w.out)
 
 	return nil
 }

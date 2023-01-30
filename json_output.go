@@ -2,13 +2,22 @@ package kleos
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"strings"
 	"sync"
 )
 
-var EOL = []byte{'\n'}
+// JSON field names for critical log data
+const (
+	FieldTimestamp = "ts"
+	FieldMessage   = "msg"
+	FieldLevel     = "level"
+	FieldVerbosity = "v"
+	FieldPkg       = "pkg"
+	FieldSrc       = "src"
+	FieldLine      = "line"
+	FieldError     = "err"
+)
 
 // JSONOutput outputs in JSON format.  Meant for services like ELK or Splunk. Note that JSONOutput
 // will overload these properties:
@@ -22,58 +31,51 @@ var EOL = []byte{'\n'}
 // * `src`   - the source file in which this log message was generated
 // * `line`  - the source code line number that contains this log message
 // * `error` - the error message formatted, if present
-// * `code` - the error code, if the error supports it
-//
 type JSONOutput struct {
 	sync.Mutex
-
-	Host      string
-	Timestamp string
-	Out       io.Writer
+	out     io.Writer
+	encoder *json.Encoder
 }
 
 // NewJSONOutput creates a new log output that's meant to be used with the ELK stack.  Supports ECS
 // fields for the standard fields.  See JSONOutput for details.
-func NewJSONOutput(host string, writer io.Writer) *JSONOutput {
+func NewJSONOutput(writer io.Writer) *JSONOutput {
 	return &JSONOutput{
-		Host:      host,
-		Timestamp: "ts",
-		Out:       writer,
+		out:     writer,
+		encoder: json.NewEncoder(writer),
 	}
 }
 
-func (w *JSONOutput) Write(m Message, msg string, args ...interface{}) error {
+func (w *JSONOutput) Write(m Message) error {
 	if m.fields == nil {
-		m.fields = Fields{}
+		m.fields = make(Fields)
 	}
 
-	m.fields[w.Timestamp] = m.when.UTC().Format(PaddedRFC3339Ms)
-	m.fields["host"] = w.Host
+	m.fields[FieldTimestamp] = m.when.UTC().Format(PaddedRFC3339Ms)
 
-	if m.debug {
-		m.fields["level"] = "debug"
-		m.fields["verbosity"] = m.verbosity
-	} else if m.err == nil {
-		m.fields["level"] = "info"
+	if m.verbosity > 0 {
+		m.fields[FieldLevel] = "debug"
+		m.fields[FieldVerbosity] = m.verbosity
+	} else if m.error == nil {
+		m.fields[FieldLevel] = "info"
 	} else {
-		m.fields["level"] = "error"
+		m.fields[FieldLevel] = "error"
 	}
 
 	// Write out the human-readable message
-	msg = strings.TrimSpace(msg)
+	msg := strings.TrimSpace(m.msg)
 	if msg != "" {
-		m.fields["message"] = fmt.Sprintf(msg, args...)
+		m.fields[FieldMessage] = msg
 	}
 
 	if m.file != "" {
-		m.fields["pkg"] = m.pkg
-		m.fields["src"] = m.file
-		m.fields["line"] = m.line
+		m.fields[FieldPkg] = m.pkg
+		m.fields[FieldSrc] = m.file
+		m.fields[FieldLine] = m.line
 	}
 
-	if m.err != nil {
-		m.fields["error"] = m.err.Error()
-		// TODO: Support error.code
+	if m.error != nil {
+		m.fields[FieldError] = m.error.Error()
 	}
 
 	// Applies any registered context variables to the fields
@@ -82,12 +84,7 @@ func (w *JSONOutput) Write(m Message, msg string, args ...interface{}) error {
 	w.Lock()
 	defer w.Unlock()
 
-	enc := json.NewEncoder(w.Out)
-	if err := enc.Encode(m.fields); err != nil {
-		return err
-	}
-
-	if _, err := w.Out.Write(EOL); err != nil {
+	if err := w.encoder.Encode(m); err != nil {
 		return err
 	}
 

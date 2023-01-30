@@ -14,14 +14,15 @@ import (
 // ColorOutput is meant to output to stdout or stderr with color.
 type ColorOutput struct {
 	sync.Mutex
-	Out io.Writer
+	out io.Writer
 
 	timestamp, info, err, debug, message, field, location *color.Color
 }
 
+// NewColorOutput creates a color output writer meant for stdout or stderr.
 func NewColorOutput(out io.Writer) *ColorOutput {
 	return &ColorOutput{
-		Out:       out,
+		out:       out,
 		timestamp: color.New(color.FgCyan, color.Faint),
 		info:      color.New(color.FgGreen),
 		err:       color.New(color.FgRed),
@@ -32,39 +33,40 @@ func NewColorOutput(out io.Writer) *ColorOutput {
 	}
 }
 
-func (w *ColorOutput) Write(m Message, msg string, args ...interface{}) error {
+// Write the message to the color output writer.
+func (w *ColorOutput) Write(m Message) error {
 	w.Lock()
 	defer w.Unlock()
 
-	_, _ = w.timestamp.Fprint(w.Out, m.when.UTC().Format(PaddedRFC3339Ms))
+	_, _ = w.timestamp.Fprint(w.out, m.when.UTC().Format(PaddedRFC3339Ms))
 
-	if m.debug {
-		_, _ = w.debug.Fprintf(w.Out, " DBG [%03d]", m.verbosity)
-	} else if m.err == nil {
-		_, _ = w.info.Fprint(w.Out, " INF")
+	if m.verbosity > 0 {
+		_, _ = w.debug.Fprintf(w.out, " D%02d", m.verbosity)
+	} else if m.error == nil {
+		_, _ = w.info.Fprint(w.out, " INF")
 	} else {
-		_, _ = w.err.Fprint(w.Out, " ERR")
+		_, _ = w.err.Fprint(w.out, " ERR")
 	}
 
 	// Write out the human-readable message
-	msg = strings.TrimSpace(msg)
+	msg := strings.TrimSpace(m.msg)
 	if msg != "" {
-		_, _ = fmt.Fprint(w.Out, " ")
-		_, _ = w.message.Fprintf(w.Out, msg, args...)
+		_, _ = fmt.Fprint(w.out, " ")
+		_, _ = w.message.Fprint(w.out, msg)
 	}
 
 	// Where was the message logged?
 	if m.file != "" {
-		_, _ = w.location.Fprintf(w.Out, " (%s/%s:%d)", m.pkg, m.file, m.line)
+		_, _ = w.location.Fprintf(w.out, " (%s/%s:%d)", m.pkg, m.file, m.line)
 	}
 
-	if m.err != nil {
-		_, _ = w.field.Fprint(w.Out, ", error=")
-		_, _ = w.field.Fprint(w.Out, strconv.Quote(m.err.Error()))
+	if m.error != nil {
+		_, _ = w.field.Fprint(w.out, ", err=")
+		_, _ = w.field.Fprint(w.out, strconv.Quote(m.error.Error()))
 	}
 
 	if m.fields == nil {
-		m.fields = Fields{}
+		m.fields = make(Fields)
 	}
 
 	// Applies any registered context variables to the fields
@@ -82,15 +84,15 @@ func (w *ColorOutput) Write(m Message, msg string, args ...interface{}) error {
 			v := encode(m.fields[k])
 
 			if v != "" {
-				_, _ = w.field.Fprint(w.Out, ", ")
-				_, _ = w.field.Fprint(w.Out, k)
-				_, _ = w.field.Fprint(w.Out, "=")
-				_, _ = w.field.Fprint(w.Out, v)
+				_, _ = w.field.Fprint(w.out, ", ")
+				_, _ = w.field.Fprint(w.out, k)
+				_, _ = w.field.Fprint(w.out, "=")
+				_, _ = w.field.Fprint(w.out, v)
 			}
 		}
 	}
 
-	fmt.Println()
+	_, _ = fmt.Fprintln(w.out)
 
 	return nil
 }
