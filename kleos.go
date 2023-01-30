@@ -27,7 +27,7 @@ func Error(err error) Message {
 }
 
 // With applies the given fields to the log message.
-func (m Message) With(fields Fields) Message {
+func With(fields Fields) Message {
 	return generate().With(fields)
 }
 

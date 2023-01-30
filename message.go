@@ -45,6 +45,12 @@ func (m Message) Error(err error) Message {
 	return m
 }
 
+// With applies the given fields to the log message.
+func (m Message) With(fields Fields) Message {
+	m.fields = fields
+	return m
+}
+
 // Debug generates a debug message.  Equivalent to `kleos.V(1).Log("This is a debug messsage!")`.
 // If the Kleos verbosity is lower than the verbosity of the message, the message will not be
 // output.

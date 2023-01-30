@@ -3,7 +3,6 @@ package kleos_test
 import (
 	"bytes"
 	"io/ioutil"
-	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -17,16 +16,23 @@ func TestLogging(t *testing.T) {
 
 	var out bytes.Buffer
 	kleos.SetOutput(kleos.NewTextOutput(&out))
+	kleos.SetVerbosity(1)
 
 	kleos.V(1).With(kleos.Fields{
 		"id":     "B8012423573231",
 		"name":   "hello",
+		"multi":  "taking space",
 		"health": 97,
 	}).Log("Hello World")
 
 	output := out.String()
-	assert.IsTrue(strings.HasSuffix(output, "\n"))
-	// TODO: other
+	assert.String(output).EndsWith("\n")
+	assert.String(output).Contains("id=B8012423573231")
+	assert.String(output).Contains("name=hello")
+	assert.String(output).Contains("multi=\"taking space\"")
+	assert.String(output).Contains("health=97")
+	assert.String(output).Contains(" Hello World ")
+	assert.String(output).Contains("D01")
 }
 
 func TestLoggingAsync(t *testing.T) {
@@ -47,6 +53,7 @@ func TestLoggingAsync(t *testing.T) {
 }
 
 func BenchmarkJSONLogging(b *testing.B) {
+	b.ReportAllocs()
 	kleos.SetOutput(kleos.NewJSONOutput(ioutil.Discard))
 
 	for n := 0; n < b.N; n++ {
