@@ -9,14 +9,14 @@ import (
 
 // JSON field names for critical log data
 const (
-	FieldTimestamp = "ts"
-	FieldMessage   = "msg"
-	FieldLevel     = "level"
-	FieldVerbosity = "v"
-	FieldPkg       = "pkg"
-	FieldSrc       = "src"
-	FieldLine      = "line"
-	FieldError     = "err"
+	JSONTimestamp = "ts"
+	JSONMessage   = "msg"
+	JSONLevel     = "level"
+	JSONVerbosity = "v"
+	JSONPkg       = "pkg"
+	JSONSrc       = "src"
+	JSONLine      = "line"
+	JSONError     = "err"
 )
 
 // JSONOutput outputs in JSON format.  Meant for services like ELK or Splunk. Note that JSONOutput
@@ -51,31 +51,31 @@ func (w *JSONOutput) Write(m Message) error {
 		m.fields = make(Fields)
 	}
 
-	m.fields[FieldTimestamp] = m.when.UTC().Format(PaddedRFC3339Ms)
+	m.fields[JSONTimestamp] = m.when.UTC().Format(PaddedRFC3339Ms)
 
 	if m.verbosity > 0 {
-		m.fields[FieldLevel] = "debug"
-		m.fields[FieldVerbosity] = m.verbosity
+		m.fields[JSONLevel] = "debug"
+		m.fields[JSONVerbosity] = m.verbosity
 	} else if m.error == nil {
-		m.fields[FieldLevel] = "info"
+		m.fields[JSONLevel] = "info"
 	} else {
-		m.fields[FieldLevel] = "error"
+		m.fields[JSONLevel] = "error"
 	}
 
 	// Write out the human-readable message
 	msg := strings.TrimSpace(m.msg)
 	if msg != "" {
-		m.fields[FieldMessage] = msg
+		m.fields[JSONMessage] = msg
 	}
 
 	if m.file != "" {
-		m.fields[FieldPkg] = m.pkg
-		m.fields[FieldSrc] = m.file
-		m.fields[FieldLine] = m.line
+		m.fields[JSONPkg] = m.pkg
+		m.fields[JSONSrc] = m.file
+		m.fields[JSONLine] = m.line
 	}
 
 	if m.error != nil {
-		m.fields[FieldError] = m.error.Error()
+		m.fields[JSONError] = m.error.Error()
 	}
 
 	// Applies any registered context variables to the fields
