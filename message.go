@@ -66,6 +66,18 @@ func (m Message) WithFields(fields Fields) Message {
 	return m
 }
 
+// Source overrides the package, file, and line number of the log message.  Helpful for middleware.
+func (m Message) Source(back int) Message {
+	_, file, line, ok := runtime.Caller(back + 1)
+	if ok {
+		m.pkg = filepath.Base(filepath.Dir(file))
+		m.file = filepath.Base(file)
+		m.line = line
+	}
+
+	return m
+}
+
 // Debug generates a debug message.  Equivalent to `kleos.V(1).Log("This is a debug messsage!")`.
 // If the Kleos verbosity is lower than the verbosity of the message, the message will not be
 // output.

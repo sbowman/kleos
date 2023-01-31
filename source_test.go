@@ -88,3 +88,21 @@ func TestLoggerLineNumbers(t *testing.T) {
 	check(t, out.String(), base+7)
 	out.Reset()
 }
+
+// Note:  if you change the internals of this test, you may need to update the "base+" values.
+func TestSourceLineNumbers(t *testing.T) {
+	// Set a baseline
+	_, _, base := source()
+
+	var out bytes.Buffer
+	kleos.SetOutput(kleos.NewTextOutput(&out))
+
+	deepCall()
+	check(t, out.String(), base+5)
+	out.Reset()
+}
+
+func deepCall() {
+	kleos.Source(1).Debug("Hello World") // +10
+
+}

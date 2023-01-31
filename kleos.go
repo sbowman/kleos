@@ -36,6 +36,11 @@ func WithFields(fields Fields) Message {
 	return generate().With(fields)
 }
 
+// Source overrides the package, file, and line number of the log message.  Helpful for middleware.
+func Source(back int) Message {
+	return generate().Source(back + 1)
+}
+
 // Debug generates a debug message.  Equivalent to `kleos.V(1).Log("This is a debug messsage!")`.
 // If the Kleos verbosity is lower than the verbosity of the message, the message will not be
 // output.
