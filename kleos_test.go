@@ -2,6 +2,7 @@ package kleos_test
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"sync"
 	"testing"
@@ -33,6 +34,59 @@ func TestLogging(t *testing.T) {
 	assert.String(output).Contains("health=97")
 	assert.String(output).Contains(" Hello World ")
 	assert.String(output).Contains("D01")
+}
+
+func TestLevel(t *testing.T) {
+	assert := tort.For(t)
+
+	var out bytes.Buffer
+	kleos.SetOutput(kleos.NewTextOutput(&out))
+	kleos.SetVerbosity(1)
+
+	kleos.With(kleos.Fields{
+		"id":     "B8012423573231",
+		"name":   "hello",
+		"multi":  "taking space",
+		"health": 97,
+	}).Log("Hello World")
+
+	output := out.String()
+	assert.String(output).Contains("INF")
+	out.Reset()
+
+	kleos.V(1).With(kleos.Fields{
+		"id":     "B8012423573231",
+		"name":   "hello",
+		"multi":  "taking space",
+		"health": 97,
+	}).Log("Hello World")
+
+	output = out.String()
+	assert.String(output).Contains("D01")
+	out.Reset()
+
+	kleos.With(kleos.Fields{
+		"id":     "B8012423573231",
+		"name":   "hello",
+		"multi":  "taking space",
+		"health": 97,
+	}).Debug("Hello World")
+
+	output = out.String()
+	assert.String(output).Contains("D01")
+	out.Reset()
+
+	kleos.Error(fmt.Errorf("yikes")).With(kleos.Fields{
+		"id":     "B8012423573231",
+		"name":   "hello",
+		"multi":  "taking space",
+		"health": 97,
+	}).Log("Hello World")
+
+	output = out.String()
+	assert.String(output).Contains("ERR")
+	assert.String(output).Contains("err=yikes")
+	out.Reset()
 }
 
 func TestLoggingAsync(t *testing.T) {

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"sort"
-	"strconv"
 	"strings"
 	"sync"
 )
@@ -51,7 +50,7 @@ func (w *TextOutput) Write(m Message) error {
 
 	if m.error != nil {
 		_, _ = fmt.Fprint(w.out, ", err=")
-		_, _ = fmt.Fprint(w.out, strconv.Quote(m.error.Error()))
+		_, _ = fmt.Fprint(w.out, encode(m.error.Error()))
 	}
 
 	if m.fields == nil {

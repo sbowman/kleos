@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"sort"
-	"strconv"
 	"strings"
 	"sync"
 
@@ -62,7 +61,7 @@ func (w *ColorOutput) Write(m Message) error {
 
 	if m.error != nil {
 		_, _ = w.field.Fprint(w.out, ", err=")
-		_, _ = w.field.Fprint(w.out, strconv.Quote(m.error.Error()))
+		_, _ = w.field.Fprint(w.out, encode(m.error.Error()))
 	}
 
 	if m.fields == nil {

@@ -21,9 +21,18 @@ type Message struct {
 }
 
 func generate() Message {
-	return Message{
+	m := Message{
 		when: time.Now(),
 	}
+
+	_, file, line, ok := runtime.Caller(2)
+	if ok {
+		m.pkg = filepath.Base(filepath.Dir(file))
+		m.file = filepath.Base(file)
+		m.line = line
+	}
+
+	return m
 }
 
 // Context records the context so that values stored in the context can be applied to the fields
@@ -67,12 +76,8 @@ func (m Message) Debug(msg string) {
 		m.verbosity = 1
 	}
 
-	if m.verbosity > 0 && Verbosity() < m.verbosity {
+	if m.verbosity < Verbosity() {
 		return
-	}
-
-	if m.pkg == "" {
-		source(&m, 2)
 	}
 
 	m.Output()
@@ -85,8 +90,8 @@ func (m Message) Debug(msg string) {
 func (m Message) Log(msg string) {
 	m.msg = msg
 
-	if m.pkg == "" {
-		source(&m, 2)
+	if m.verbosity > 0 && m.verbosity > Verbosity() {
+		return
 	}
 
 	m.Output()
@@ -95,17 +100,4 @@ func (m Message) Log(msg string) {
 // Info logs a message.  Deprecated; use Log instead.
 func (m Message) Info(msg string) {
 	m.Log(msg)
-}
-
-// Appends the filename and line number information to the log message (where the log was
-// applied).
-func source(m *Message, back int) {
-	_, file, line, ok := runtime.Caller(back)
-	if !ok {
-		return
-	}
-
-	m.pkg = filepath.Base(filepath.Dir(file))
-	m.file = filepath.Base(file)
-	m.line = line
 }
