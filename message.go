@@ -88,7 +88,7 @@ func (m Message) Debug(msg string) {
 		m.verbosity = 1
 	}
 
-	if m.verbosity < Verbosity() {
+	if m.verbosity > Verbosity() {
 		return
 	}
 
