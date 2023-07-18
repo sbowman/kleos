@@ -3,7 +3,7 @@ package kleos_test
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"sync"
 	"testing"
 	"time"
@@ -108,7 +108,7 @@ func TestLoggingAsync(t *testing.T) {
 
 func BenchmarkJSONLogging(b *testing.B) {
 	b.ReportAllocs()
-	kleos.SetOutput(kleos.NewJSONOutput(ioutil.Discard))
+	kleos.SetOutput(kleos.NewJSONOutput(io.Discard))
 
 	for n := 0; n < b.N; n++ {
 		kleos.V(1).With(kleos.Fields{

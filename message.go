@@ -54,6 +54,12 @@ func (m Message) Error(err error) Message {
 	return m
 }
 
+// Err adds the error message as a field, "error", in the output.
+func (m Message) Err(err error) Message {
+	m.error = err
+	return m
+}
+
 // With applies the given fields to the log message.
 func (m Message) With(fields Fields) Message {
 	m.fields = fields

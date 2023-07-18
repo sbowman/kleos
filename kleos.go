@@ -26,6 +26,11 @@ func Error(err error) Message {
 	return generate().Error(err)
 }
 
+// Err adds the error message as a field, "source", in the output.
+func Err(err error) Message {
+	return generate().Error(err)
+}
+
 // With applies the given fields to the log message.
 func With(fields Fields) Message {
 	return generate().With(fields)
