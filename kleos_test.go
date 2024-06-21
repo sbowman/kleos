@@ -3,17 +3,18 @@ package kleos_test
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"github.com/stretchr/testify/assert"
+	"io"
+	"strings"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/sbowman/kleos"
-	"github.com/sbowman/tort"
 )
 
 func TestLogging(t *testing.T) {
-	assert := tort.For(t)
+	assert := assert.New(t)
 
 	var out bytes.Buffer
 	kleos.SetOutput(kleos.NewTextOutput(&out))
@@ -27,17 +28,17 @@ func TestLogging(t *testing.T) {
 	}).Log("Hello World")
 
 	output := out.String()
-	assert.String(output).EndsWith("\n")
-	assert.String(output).Contains("id=B8012423573231")
-	assert.String(output).Contains("name=hello")
-	assert.String(output).Contains("multi=\"taking space\"")
-	assert.String(output).Contains("health=97")
-	assert.String(output).Contains(" Hello World ")
-	assert.String(output).Contains("D01")
+	assert.True(strings.HasSuffix(output, "\n"))
+	assert.Contains(output, "id=B8012423573231")
+	assert.Contains(output, "name=hello")
+	assert.Contains(output, "multi=\"taking space\"")
+	assert.Contains(output, "health=97")
+	assert.Contains(output, " Hello World ")
+	assert.Contains(output, "D01")
 }
 
 func TestLevel(t *testing.T) {
-	assert := tort.For(t)
+	assert := assert.New(t)
 
 	var out bytes.Buffer
 	kleos.SetOutput(kleos.NewTextOutput(&out))
@@ -51,7 +52,7 @@ func TestLevel(t *testing.T) {
 	}).Log("Hello World")
 
 	output := out.String()
-	assert.String(output).Contains("INF")
+	assert.Contains(output, "INF")
 	out.Reset()
 
 	kleos.V(1).With(kleos.Fields{
@@ -62,7 +63,7 @@ func TestLevel(t *testing.T) {
 	}).Log("Hello World")
 
 	output = out.String()
-	assert.String(output).Contains("D01")
+	assert.Contains(output, "D01")
 	out.Reset()
 
 	kleos.With(kleos.Fields{
@@ -73,7 +74,7 @@ func TestLevel(t *testing.T) {
 	}).Debug("Hello World")
 
 	output = out.String()
-	assert.String(output).Contains("D01")
+	assert.Contains(output, "D01")
 	out.Reset()
 
 	kleos.Error(fmt.Errorf("yikes")).With(kleos.Fields{
@@ -84,8 +85,8 @@ func TestLevel(t *testing.T) {
 	}).Log("Hello World")
 
 	output = out.String()
-	assert.String(output).Contains("ERR")
-	assert.String(output).Contains("err=yikes")
+	assert.Contains(output, "ERR")
+	assert.Contains(output, "err=yikes")
 	out.Reset()
 }
 
@@ -108,7 +109,7 @@ func TestLoggingAsync(t *testing.T) {
 
 func BenchmarkJSONLogging(b *testing.B) {
 	b.ReportAllocs()
-	kleos.SetOutput(kleos.NewJSONOutput(ioutil.Discard))
+	kleos.SetOutput(kleos.NewJSONOutput(io.Discard))
 
 	for n := 0; n < b.N; n++ {
 		kleos.V(1).With(kleos.Fields{

@@ -10,8 +10,8 @@ import (
 
 var mutex sync.RWMutex
 
-// Context records the context so that values stored in the context can be applied to the fields
-// automatically on output.
+// Context records the context so that values stored in the context can be applied to the
+// fields automatically on output.
 func Context(ctx context.Context) Message {
 	return generate().Context(ctx)
 }
@@ -36,22 +36,23 @@ func WithFields(fields Fields) Message {
 	return generate().With(fields)
 }
 
-// Source overrides the package, file, and line number of the log message.  Helpful for middleware.
+// Source overrides the package, file, and line number of the log message.  Helpful for
+// middleware.
 func Source(back int) Message {
 	return generate().Source(back + 1)
 }
 
-// Debug generates a debug message.  Equivalent to `kleos.V(1).Log("This is a debug messsage!")`.
-// If the Kleos verbosity is lower than the verbosity of the message, the message will not be
-// output.
+// Debug generates a debug message.  Equivalent to `kleos.V(1).Log("This is a debug
+// messsage!")`.  If the Kleos verbosity is lower than the verbosity of the message, the
+// message will not be output.  Should use `V().Log()` instead.
 func Debug(msg string) {
 	generate().Debug(msg)
 }
 
-// Log logs a message.  If the message has verbosity, it is logged as a debug message (or not logged
-// if the Kleos verbosity setting isn't high enough).  If it has no verbosity but has errors, it
-// is logged as an error message.  If it has no verbosity and no errors, it is logged as an info
-// message.
+// Log logs a message.  If the message has verbosity, it is logged as a debug message (or
+// not logged if the Kleos verbosity setting isn't high enough).  If it has no verbosity
+// but has errors, it is logged as an error message.  If it has no verbosity and no
+// errors, it is logged as an info message.
 func Log(msg string) {
 	generate().Log(msg)
 }

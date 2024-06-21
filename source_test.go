@@ -2,13 +2,13 @@ package kleos_test
 
 import (
 	"bytes"
+	"fmt"
 	"path/filepath"
 	"runtime"
-	"strconv"
 	"testing"
 
 	"github.com/sbowman/kleos"
-	"github.com/sbowman/tort"
+	"github.com/stretchr/testify/assert"
 )
 
 func source() (string, string, int) {
@@ -24,8 +24,8 @@ func source() (string, string, int) {
 }
 
 func check(t *testing.T, output string, line int) {
-	assert := tort.For(t)
-	assert.String(output).Contains("(kleos/source_test.go:" + strconv.Itoa(line) + ")")
+	assert := assert.New(t)
+	assert.Contains(output, fmt.Sprintf("(kleos/source_test.go:%d)", line))
 }
 
 // Note:  if you change the internals of this test, you may need to update the "base+" values.
@@ -50,17 +50,17 @@ func TestLineNumbers(t *testing.T) {
 		"name":   "hello",
 		"multi":  "taking space",
 		"health": 97,
-	}).Log("Hello World")
+	}).Log("Hello World 1")
 	check(t, out.String(), base+14)
 	out.Reset()
 
-	kleos.V(1).With(kleos.Fields{
+	kleos.With(kleos.Fields{
 		"id":     "B8012423573231",
 		"name":   "hello",
 		"multi":  "taking space",
 		"health": 97,
-	}).Debug("Hello World")
-	check(t, out.String(), base+23)
+	}).V(2).Debug("Hello World 2")
+	assert.Empty(t, out.String())
 	out.Reset()
 
 	kleos.V(1).With(kleos.Fields{
@@ -68,7 +68,7 @@ func TestLineNumbers(t *testing.T) {
 		"name":   "hello",
 		"multi":  "taking space",
 		"health": 97,
-	}).Info("Hello World")
+	}).Info("Hello World 3")
 	check(t, out.String(), base+32)
 	out.Reset()
 }

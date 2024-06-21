@@ -2,16 +2,14 @@ package kleos_test
 
 import (
 	"bytes"
+	"github.com/stretchr/testify/assert"
 	"testing"
 
 	"github.com/sbowman/kleos"
-	"github.com/sbowman/tort"
 )
 
-// TODO: test that verbosity works right
-
 func TestVerbosity(t *testing.T) {
-	assert := tort.For(t)
+	assert := assert.New(t)
 
 	var out bytes.Buffer
 	kleos.SetOutput(kleos.NewTextOutput(&out))
@@ -20,27 +18,27 @@ func TestVerbosity(t *testing.T) {
 	kleos.Log("Hello World")
 
 	output := out.String()
-	assert.String(output).NotContains("D01")
-	assert.String(output).Contains("INF")
-	assert.String(output).Contains(" Hello World ")
+	assert.NotContains(output, "D01")
+	assert.Contains(output, "INF")
+	assert.Contains(output, " Hello World ")
 
 	out.Reset()
 
 	kleos.V(2).Log("Hello World")
 
 	output = out.String()
-	assert.String(output).Contains("D02")
-	assert.String(output).NotContains("INF")
-	assert.String(output).Contains(" Hello World ")
+	assert.Contains(output, "D02")
+	assert.NotContains(output, "INF")
+	assert.Contains(output, " Hello World ")
 
 	out.Reset()
 
 	kleos.V(3).Log("Hello World")
 
 	output = out.String()
-	assert.String(output).NotContains("D02")
-	assert.String(output).NotContains("INF")
-	assert.String(output).NotContains(" Hello World ")
+	assert.NotContains(output, "D02")
+	assert.NotContains(output, "INF")
+	assert.NotContains(output, " Hello World ")
 
 	out.Reset()
 }
