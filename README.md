@@ -107,7 +107,7 @@ JSON output:
     kleos.SetOutput(kleos.NewJSONOutput(logstash)
 
 A common pattern I use is to configure a "dev mode" on startup.  By default, a project
-using Kleos starts in a "dev mode."  This outputs colorized log messages to `os.Stdout`.
+using Kleos starts in a "dev mode."  This outputs plain text log messages to `os.Stdout`.
 In production, I enable an environment variable which outputs JSON objects to a log file,
 `os.Stdout` (maybe in a Kube cluster), or to Logstash.
 
