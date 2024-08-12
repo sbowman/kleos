@@ -2,7 +2,7 @@
 
 Kleos is a simple logging with a few very opinionated ideas behind it:
 
-* Logging is for humans to read.  If you want to measure output, use a metric.
+* Logging is for humans to read. If you want to measure output, use a metric.
 * You shouldn't have to pass a logger into every function to log messages.
 * Various log levels are overly complicated and require too much effort.
 * Debug log messages are for developers; other logs are for devops.
@@ -106,7 +106,7 @@ JSON output:
     logstash := kleos.NewLogstashWriter(host, 5*time.Second)
     kleos.SetOutput(kleos.NewJSONOutput(logstash)
 
-A common pattern I use is to configure a "dev mode" on startup.  By default, a project
+A common pattern I use is to configure a "dev mode" on startup. By default, a project
 using Kleos starts in a "dev mode."  This outputs plain text log messages to `os.Stdout`.
 In production, I enable an environment variable which outputs JSON objects to a log file,
 `os.Stdout` (maybe in a Kube cluster), or to Logstash.
@@ -134,4 +134,9 @@ To set the verbosity level, simply:
     kleos.SetVerbosity(3)
 
 This will tell Kleos output to include any log messages with verbosity 1, 2, or 3.
+
+To disable debug logs:
+
+    kleos.SetVerbosity(0)
+
 
