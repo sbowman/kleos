@@ -2,13 +2,15 @@ package kleos
 
 import (
 	"context"
-	"path/filepath"
 	"runtime"
 	"time"
 )
 
-// Message carries details about the log message as function calls are made.
+// Message carries details about the log message as function calls are made.  Note that
+// messages aren't thread-safe, so don't pass them between goroutines (not sure why you'd
+// do that).
 type Message struct {
+	k         *Kleos
 	when      time.Time       // when was this message logged
 	pkg       string          // in what package was the message generated
 	file      string          // in what source code file was the message generated
@@ -18,18 +20,24 @@ type Message struct {
 	msg       string          // the human-readable log message
 	error     error           // include details about the error that generated this message
 	fields    Fields          // any custom fields to include, typically as JSON output
+	source    bool            // include the source file and line number?
+	pc        []uintptr       // store the stacktrace
+	skip      int             // how far back in the stacktrace to display source file and line number
+	out       Writer
 }
 
-func generate() Message {
+func generate(out Writer, source bool) Message {
 	m := Message{
-		when: time.Now(),
+		when:   time.Now(),
+		source: source,
+		skip:   0,
+		out:    out,
 	}
 
-	_, file, line, ok := runtime.Caller(2)
-	if ok {
-		m.pkg = filepath.Base(filepath.Dir(file))
-		m.file = filepath.Base(file)
-		m.line = line
+	// A bit of extra effort so calling Source() repeatedly doesn't cost anything more
+	if source {
+		m.pc = make([]uintptr, 5)
+		_ = runtime.Callers(3, m.pc)
 	}
 
 	return m
@@ -68,12 +76,7 @@ func (m Message) WithFields(fields Fields) Message {
 
 // Source overrides the package, file, and line number of the log message.  Helpful for middleware.
 func (m Message) Source(back int) Message {
-	_, file, line, ok := runtime.Caller(back + 1)
-	if ok {
-		m.pkg = filepath.Base(filepath.Dir(file))
-		m.file = filepath.Base(file)
-		m.line = line
-	}
+	m.skip = back
 
 	return m
 }

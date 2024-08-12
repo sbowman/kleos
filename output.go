@@ -3,6 +3,8 @@ package kleos
 import (
 	"fmt"
 	"os"
+	"path/filepath"
+	"runtime"
 )
 
 const (
@@ -10,11 +12,8 @@ const (
 	PaddedRFC3339Ms = "2006-01-02T15:04:05.000Z07:00"
 )
 
-// Output receives log messages; defaults to plain text output on stdout.
-var output Writer = NewTextOutput(os.Stdout)
-
-// Writer supports outputting log messages in various formats to various receivers, such as stdout
-// or ELK.
+// Writer supports outputting log messages in various formats to various receivers, such
+// as stdout or ELK.
 type Writer interface {
 	// Write a message to the output.  Messages should end in a carriage return.
 	Write(m Message) error
@@ -22,15 +21,30 @@ type Writer interface {
 
 // SetOutput changes the output writer.
 func SetOutput(out Writer) {
-	mutex.Lock()
-	defer mutex.Unlock()
+	local.SetOutput(out)
+}
 
-	output = out
+// SetOutput changes the output writer.
+func (k *Kleos) SetOutput(out Writer) {
+	k.Lock()
+	defer k.Unlock()
+
+	k.output = out
 }
 
 // Output writes a nicely formatted message to the output device.
 func (m Message) Output() {
-	if err := output.Write(m); err != nil {
+	if m.source && m.skip >= 0 && m.skip < len(m.pc) {
+		frame, _ := runtime.CallersFrames(m.pc[m.skip : m.skip+1]).Next()
+		_, file, line, ok := frame.PC, frame.File, frame.Line, frame.PC != 0
+		if ok {
+			m.pkg = filepath.Base(filepath.Dir(file))
+			m.file = filepath.Base(file)
+			m.line = line
+		}
+	}
+
+	if err := m.out.Write(m); err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "Unable to log message: %s", err)
 		return
 	}

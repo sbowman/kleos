@@ -71,6 +71,59 @@ func TestLineNumbers(t *testing.T) {
 	}).Info("Hello World 3")
 	check(t, out.String(), base+32)
 	out.Reset()
+
+	kleos.Info("Hello World")
+	check(t, out.String(), base+41)
+	out.Reset()
+}
+
+func TestKleosLineNumbers(t *testing.T) {
+	// Set a baseline
+	_, _, base := source()
+
+	var out bytes.Buffer
+	log := kleos.New()
+	log.SetOutput(kleos.NewTextOutput(&out))
+	log.SetVerbosity(1)
+
+	log.Log("Hello World") // +6
+	check(t, out.String(), base+7)
+	out.Reset()
+
+	log.Debug("Hello World") // +10
+	check(t, out.String(), base+11)
+	out.Reset()
+
+	log.V(1).With(kleos.Fields{
+		"id":     "B8012423573231",
+		"name":   "hello",
+		"multi":  "taking space",
+		"health": 97,
+	}).Log("Hello World 1")
+	check(t, out.String(), base+15)
+	out.Reset()
+
+	log.With(kleos.Fields{
+		"id":     "B8012423573231",
+		"name":   "hello",
+		"multi":  "taking space",
+		"health": 97,
+	}).V(2).Debug("Hello World 2")
+	assert.Empty(t, out.String())
+	out.Reset()
+
+	log.V(1).With(kleos.Fields{
+		"id":     "B8012423573231",
+		"name":   "hello",
+		"multi":  "taking space",
+		"health": 97,
+	}).Info("Hello World 3")
+	check(t, out.String(), base+33)
+	out.Reset()
+
+	log.Info("Hello World")
+	check(t, out.String(), base+42)
+	out.Reset()
 }
 
 // Note:  if you change the internals of this test, you may need to update the "base+" values.

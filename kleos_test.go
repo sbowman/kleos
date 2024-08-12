@@ -119,3 +119,22 @@ func BenchmarkJSONLogging(b *testing.B) {
 		}).Log("Database is having serious issues related to connections")
 	}
 }
+
+func BenchmarkSimpleLogging(b *testing.B) {
+	b.ReportAllocs()
+	kleos.SetOutput(kleos.NewTextOutput(io.Discard))
+
+	for n := 0; n < b.N; n++ {
+		kleos.Log("Database is having serious issues related to connections")
+	}
+}
+
+func BenchmarkNoSource(b *testing.B) {
+	b.ReportAllocs()
+	kleos.EnableSource(false)
+	kleos.SetOutput(kleos.NewTextOutput(io.Discard))
+
+	for n := 0; n < b.N; n++ {
+		kleos.Log("Database is having serious issues related to connections")
+	}
+}

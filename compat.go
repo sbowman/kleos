@@ -15,7 +15,7 @@ type logger struct {
 
 // Printf logs a message to Kleos logger.
 func (l logger) Printf(msg string, args ...interface{}) {
-	m := generate()
+	m := generate(local.output, local.includeSource).Source(0)
 
 	if len(args) == 0 {
 		m.Log(msg)

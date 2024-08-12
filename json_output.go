@@ -84,7 +84,7 @@ func (w *JSONOutput) Write(m Message) error {
 	w.Lock()
 	defer w.Unlock()
 
-	if err := w.encoder.Encode(m); err != nil {
+	if err := w.encoder.Encode(m.fields); err != nil {
 		return err
 	}
 
