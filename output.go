@@ -34,6 +34,10 @@ func (k *Kleos) SetOutput(out Writer) {
 
 // Output writes a nicely formatted message to the output device.
 func (m Message) Output() {
+	if m.out == nil {
+		return
+	}
+
 	if m.source && m.skip >= 0 && m.skip < len(m.pc) {
 		frame, _ := runtime.CallersFrames(m.pc[m.skip : m.skip+1]).Next()
 		_, file, line, ok := frame.PC, frame.File, frame.Line, frame.PC != 0
